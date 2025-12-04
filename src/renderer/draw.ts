@@ -40,30 +40,34 @@ export function drawMatchLines(
   procW: number,
   procH: number,
   viewW: number,
-  viewH: number
+  viewH: number,
+  refX: number,
+  refY: number,
+  refW: number,
+  refH: number,
+  refImgW: number,
+  refImgH: number
 ) {
-  const sx = viewW / procW;
-  const sy = viewH / procH;
+  const sxCam = viewW / procW;
+  const syCam = viewH / procH;
+
+  const sxRef = refW / refImgW; // scale reference keypoints into thumbnail
+  const syRef = refH / refImgH;
 
   ctx.strokeStyle = "rgba(0,255,0,0.6)";
-  ctx.lineWidth = 1;
+  ctx.lineWidth = 2;
 
   matches.forEach((m) => {
-    const cam = kpCam.get(m.queryIdx); // camera point
-    const ref = kpRef.get(m.trainIdx); // reference point (in reference image space)
+    const cam = kpCam.get(m.queryIdx);
+    const ref = kpRef.get(m.trainIdx);
 
-    const x1 = cam.pt.x * sx;
-    const y1 = cam.pt.y * sy;
+    // camera keypoint in full-screen canvas
+    const x1 = cam.pt.x * sxCam;
+    const y1 = cam.pt.y * syCam;
 
-    // NOTE:
-    // We don’t draw ref.x/ref.y directly because reference image
-    // isn’t displayed. Instead we draw a short line showing direction.
-
-    const angle = Math.atan2(ref.pt.y - cam.pt.y, ref.pt.x - cam.pt.x);
-    const len = 20;
-
-    const x2 = x1 + Math.cos(angle) * len;
-    const y2 = y1 + Math.sin(angle) * len;
+    // reference keypoint inside the thumbnail box
+    const x2 = refX + ref.pt.x * sxRef;
+    const y2 = refY + ref.pt.y * syRef;
 
     ctx.beginPath();
     ctx.moveTo(x1, y1);

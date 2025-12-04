@@ -43,6 +43,9 @@ export class OpenCVwasm {
 
     queryImage.onload = async () => {
       this.refFeatures = await computeReferenceFeatures(this.cv, queryImage);
+      this.refFeatures.image = queryImage; // store the DOM image
+      this.refFeatures.width = queryImage.width;
+      this.refFeatures.height = queryImage.height;
       console.log("Reference features loaded:", this.refFeatures);
     };
   }
@@ -131,56 +134,78 @@ export class OpenCVwasm {
     const sx = viewCanvas.width / PROC_W;
     const sy = viewCanvas.height / PROC_H;
 
-    for (let i = 0; i < keypoints.size(); i++) {
-      const kp = keypoints.get(i);
-      drawKeypointsWithAngle(
-        viewCtx,
-        {
-          size: () => 1,
-          get: () => ({
-            pt: { x: kp.pt.x * sx, y: kp.pt.y * sy },
-            angle: kp.angle,
-          }),
-        },
-        "yellow"
-      );
-    }
+    // for (let i = 0; i < keypoints.size(); i++) {
+    //   const kp = keypoints.get(i);
+    //   drawKeypointsWithAngle(
+    //     viewCtx,
+    //     {
+    //       size: () => 1,
+    //       get: () => ({
+    //         pt: { x: kp.pt.x * sx, y: kp.pt.y * sy },
+    //         angle: kp.angle,
+    //       }),
+    //     },
+    //     "yellow"
+    //   );
+    // }
 
     if (this.refFeatures) {
+      viewCtx.drawImage(
+        this.refFeatures.image, // ← save reference image element
+        20,
+        viewCanvas.height - 220,
+        200,
+        200
+      );
       const matches = matchFeatures(
         cv,
         descriptors,
         this.refFeatures.descriptors
       );
       const goodMatches = filterMatches(matches, 40);
-      // console.log(goodMatches.length);
-      // // Draw raw match lines
-      // drawMatchLines(
-      //   viewCtx,
-      //   keypoints,
-      //   this.refFeatures.keypoints,
-      //   goodMatches,
-      //   PROC_W,
-      //   PROC_H,
-      //   viewCanvas.width,
-      //   viewCanvas.height
-      // );
+      console.log(goodMatches.length);
+      // Draw raw match lines
+      const refX = 20;
+      const refY = viewCanvas.height - 220;
+      const refW = 200;
+      const refH = 200;
 
-      const H = computeHomography(
-        cv,
+      drawMatchLines(
+        viewCtx,
         keypoints,
         this.refFeatures.keypoints,
-        goodMatches
+        goodMatches,
+        PROC_W,
+        PROC_H,
+        viewCanvas.width,
+        viewCanvas.height,
+
+        // reference image draw position
+        refX,
+        refY,
+        refW,
+        refH,
+
+        // original reference image size
+        this.refFeatures.width,
+        this.refFeatures.height
       );
-      if (H && !H.empty()) {
-        drawHomography(
-          viewCtx,
-          cv,
-          H,
-          this.refFeatures.width,
-          this.refFeatures.height
-        );
-      }
+
+      // const H = computeHomography(
+      //   cv,
+      //   keypoints,
+      //   this.refFeatures.keypoints,
+      //   goodMatches
+      // );
+      // if (H && !H.empty()) {
+      //   drawHomography(
+      //     viewCtx,
+      //     cv,
+      //     H,
+      //     this.refFeatures.width,
+      //     this.refFeatures.height
+      //   );
+      // }
     }
 
     fps.update();
