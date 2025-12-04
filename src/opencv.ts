@@ -1,3 +1,4 @@
+import { computeReferenceFeatures } from "./image-processing/query-processing";
 import { drawKeypointsWithAngle } from "./renderer/draw";
 import { Config } from "./utils/config";
 import type { FPSTracker } from "./utils/fps-tracker";
@@ -26,6 +27,17 @@ export class OpenCVwasm {
 
   async waitReady() {
     return this.ready;
+  }
+
+  private async processQueryImage() {
+    const queryImage = new Image();
+    queryImage.src = Config.DEFAULT_IMAGE_URL;
+    queryImage.crossOrigin = "anonymous";
+
+    queryImage.onload = async () => {
+      const refFeatures = await computeReferenceFeatures(this.cv, queryImage);
+      console.log("Reference features:", refFeatures);
+    };
   }
 
   /* ------------------------------------------------------
@@ -138,6 +150,8 @@ export class OpenCVwasm {
     fpsTracker: FPSTracker
   ) {
     await this.waitReady();
+    await this.processQueryImage();
+
     const cv = this.cv;
 
     // Wait for video metadata
