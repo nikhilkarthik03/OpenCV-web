@@ -1,11 +1,18 @@
+import { computeHomography } from "./image-processing/homography";
+import { filterMatches, matchFeatures } from "./image-processing/matching";
 import { computeReferenceFeatures } from "./image-processing/query-processing";
-import { drawKeypointsWithAngle } from "./renderer/draw";
+import {
+  drawHomography,
+  drawKeypointsWithAngle,
+  drawMatchLines,
+} from "./renderer/draw";
 import { Config } from "./utils/config";
 import type { FPSTracker } from "./utils/fps-tracker";
 
 export class OpenCVwasm {
   private ready: Promise<void>;
   private cv: any;
+  private refFeatures: any = null;
 
   constructor() {
     this.ready = this.initialize();
@@ -35,8 +42,8 @@ export class OpenCVwasm {
     queryImage.crossOrigin = "anonymous";
 
     queryImage.onload = async () => {
-      const refFeatures = await computeReferenceFeatures(this.cv, queryImage);
-      console.log("Reference features:", refFeatures);
+      this.refFeatures = await computeReferenceFeatures(this.cv, queryImage);
+      console.log("Reference features loaded:", this.refFeatures);
     };
   }
 
@@ -137,6 +144,43 @@ export class OpenCVwasm {
         },
         "yellow"
       );
+    }
+
+    if (this.refFeatures) {
+      const matches = matchFeatures(
+        cv,
+        descriptors,
+        this.refFeatures.descriptors
+      );
+      const goodMatches = filterMatches(matches, 40);
+      // console.log(goodMatches.length);
+      // // Draw raw match lines
+      // drawMatchLines(
+      //   viewCtx,
+      //   keypoints,
+      //   this.refFeatures.keypoints,
+      //   goodMatches,
+      //   PROC_W,
+      //   PROC_H,
+      //   viewCanvas.width,
+      //   viewCanvas.height
+      // );
+
+      const H = computeHomography(
+        cv,
+        keypoints,
+        this.refFeatures.keypoints,
+        goodMatches
+      );
+      if (H && !H.empty()) {
+        drawHomography(
+          viewCtx,
+          cv,
+          H,
+          this.refFeatures.width,
+          this.refFeatures.height
+        );
+      }
     }
 
     fps.update();
