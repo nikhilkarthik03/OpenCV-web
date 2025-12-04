@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      #fpsCounter {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(102, 126, 234, 0.5);
+        border-radius: 12px;
+        padding: 12px 20px;
+        font-family: "Monaco", "Courier New", monospace;
+        font-size: 18px;
+        font-weight: bold;
+        color: #fff;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        z-index: 1000;
+      }
+
+      .fps-label {
+        color: #667eea;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 4px;
+      }
+
+      .fps-value {
+        font-size: 32px;
+        color: #4ade80;
+        text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+      }
+
+      .fps-value.low {
+        color: #f87171;
+        text-shadow: 0 0 10px rgba(248, 113, 113, 0.5);
+      }
+
+      .fps-value.medium {
+        color: #fbbf24;
+        text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+      }
+    </style>
+  </head>
+  <body style="margin: 0; background: #111; color: white">
+    <video id="video" autoplay playsinline style="display: none"></video>
+    <canvas id="canvas"></canvas>
+
+    <div id="fpsCounter">
+      <div class="fps-label">FPS</div>
+      <div class="fps-value">0</div>
+    </div>
+    <script>
+      window.Module = {
+        locateFile(path) {
+          if (path.endsWith(".wasm")) return "/build/opencv_js.wasm";
+          return path;
+        },
+      };
+    </script>
+
+    <script src="/build/opencv_js.js"></script>
+
+    <script>
+      // IMPORTANT: cv() returns a Promise
+      window.cvReadyPromise = window.cv(window.Module).then((instance) => {
+        console.log("OpenCV WASM initialized");
+        window.cv = instance; // <-- replace factory with actual module
+        window.cvReady = true;
+      });
+    </script>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
