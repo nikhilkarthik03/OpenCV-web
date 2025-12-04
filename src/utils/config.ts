@@ -7,6 +7,10 @@ export class Config {
 
   static readonly FPS_UPDATE_INTERVAL: number = 0.5; // seconds
 
+  static readonly DETECTOR: string = "ORB";
+
+  static readonly STD_MIN_DIM: number = 300;
+
   static readonly FPS_THRESHOLDS: { LOW: number; MEDIUM: number } = {
     LOW: 20,
     MEDIUM: 40,
